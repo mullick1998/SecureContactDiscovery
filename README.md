@@ -1,15 +1,16 @@
 # Secure Contact Discovery Demo
 
-Once an application has been downloaded, it typically asks for permission to read the entire address book on the client's device and sends that information to a server so that each contact may be searched up. Following that, the contacts that really have the program loaded are returned, and the app is aware that you may message them.
+Usually after downloading any application, the process involves seeking permission to read the whole address book on the client's device, sending it off to a server for each contact to be looked up. The contacts that turn out to actually have the application installed are then returned, and the application knows that you can send those people a message.
 
-Clients may utilize Contact Discovery to find out which of their contacts have downloaded the application, but it keeps their contact information private from the service provider or other parties that might compromise the service.
-It is accomplished by hashing each contact from the client's phonebook using a hashing method such as `md5` or `SHA`, storing the results in a table, and then extracting each one to compare with the server's hash list of people who have registered. It can be made more secure by employing a "password," although brute force attacks are still possible.
+Contact Discovery allows clients to discover which of their contacts are registered users of the applicaton, but does not reveal their contacts to the service operator or any party that may compromise the service.
+
+It is done by hasing the individual contacts from phonebook of the client using any hashing algorithm like `md5` or `SHA` and store them in the table and then extract each of them and comparing with the hash number of registered users in the server. It can be made more secure by using `password`, but still can be brute force.
 
 The possible solution to make it much more secure is to run a contact discovery service in a secure SGX enclave.
 
 # Protocol
 ## Description
-The protocol is simple to comprehend:
+Protocol is easy to understand:
 
 1. First, The client compiles a list of identifiers for all the people it wants to look up like usernames, emails, phone numbers and hashes each identifier with a pre-agreed-upon appropriate hashing function (SHA is probably a good choice).
 2. Generally all the other registered user's identifier is already stored in hash in server, but we will upload here manually to learn better
@@ -19,18 +20,18 @@ The protocol is simple to comprehend:
 
 NOTE: The protocol for `Confidential Contact Discovery` is exact same, but it take place inside the secure enclave. So let's check it.
 
-## Why is it secure
-The purpose of the aforementioned protocol is to prevent the client from sending the server the complete identity since there are so few potential identifiers that a hash really doesn't offer any privacy; it's merely a handy technique to divide the keyspace. After all the hashing, this is roughly equivalent to wanting to know if the server is aware of the email address "mostakim@t-systems-mms.com" and sending "mos" in order to have the server respond with "mostakim@t-systems-mms.com," at which point you can be reasonably certain the server is aware of it.
+## Why this is private
+The point of the protocol above is that the client doesn't send the server the entire identifier (the space of all possible identifiers is so small that a hash provides pretty much no privacy, it's just a convenient way to segment the keyspace). After all the hashing, this is pretty much the equivalent of wanting to see if the server knows the email address "mostakim@t-systems-mms.com", and sending "mos" to have the server reply with "mostakim@t-systems-mms.com", at which point you're pretty sure the server knows about it.
 
-Though the server cannot tell if you intended "mostakim.mullick@t-systems.com" or "mostakim.mullick@mailbox.tu-dresden.de" because you just sent "mos." Your privacy is protected as a result, and the contact finding process continues as usual.
+However, since you only sent "mos", the server can't know whether you meant mostakim.mullick@t-systems.com" or "mostakim.mullick@mailbox.tu-dresden.de". Thus, your privacy is preserved, while the contact discovery process proceeds as usual.
 
-## Issues to consider
-The lengths that the client and server send must take certain factors into account. The client obtains less data but also has less privacy the longer the hash it transmits. The client presumably does not want to set a hash prefix that is so broad that it receives 100 hashes per contact, but the server will likely want to impose a minimum length to prevent DoS attacks by users asking for every hash starting with a single character.
+## Considerations
+There are a few considerations in the lengths that the client and server send. The longer the hash that the client sends, the less privacy it has, but also the less data it receives. The server will probably want to enforce a minimum length to avoid DoS attacks by people asking for every hash starting with a single character, but the client also probably does not want to specify a hash prefix so general that it receives 100 hashes per contact.
 
-Although it is less crucial because the server doesn't care as much about obscuring which users are using the service, the server could wish to weaken its reply truncation length as well. That will depend on the service's user base and the server's comfort level with providing lengthy hashes.
+Conversely, the server may want to weak its reply truncation length as well (although it's less important, since the server doesn't care about hiding which users are on the service as much). That will depend on how many users are on the service and how comfortable the server is with sending long hashes.
 
 # About Server
-Go was used to write the server solution that is being offered, mostly for speed and deployment simplicity. It's really straightforward; it utilizes an HTTP API to connect to the outside world and SQLite to store and query the list of hashes. This is how it functions:
+The provided server implementation is written in Go, mainly for speed and ease of deployment. It's pretty simple, it uses SQLite to store and query the list of hashes and an HTTP API for communicating with the outside world. Here's how that works:
 
 ## Prerequisites
 
