@@ -9,6 +9,7 @@ It is done by hasing the individual contacts from phonebook of the client using 
 The possible solution to make it much more secure is to run a contact discovery service in a secure SGX enclave.
 
 # Protocol
+
 ## Description
 Protocol is easy to understand:
 
